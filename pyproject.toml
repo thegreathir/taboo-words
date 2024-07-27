@@ -2,7 +2,10 @@
 name = "taboo-words"
 version = "0.1.0"
 description = "Add your description here"
-dependencies = []
+dependencies = [
+    "openai>=1.37.1",
+    "pandas>=2.2.2",
+]
 readme = "README.md"
 requires-python = ">= 3.8"
 
