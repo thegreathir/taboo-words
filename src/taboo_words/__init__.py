@@ -5,12 +5,14 @@ from typing import List
 import json
 import tqdm
 
+WORD_COUNT = 10
+
 SYSTEM_MESSAGE = """
 You are a good Taboo game word generator designed to output JSON. You speak Persian.
 """
 
 USER_MESSAGE = """
-Generate a list of 4 taboo words for the target word: "{}".
+Generate a list of {} Taboo words for the target word: "{}".
 All the generated words should be in Persian.
 Present the output in a JSON format with the structure {{"words": []}}.
 Make it as challenging as possible for the player who is trying
@@ -31,14 +33,14 @@ def generate_taboo_words(client: OpenAI, word: str) -> List[str]:
                 },
                 {
                     "role": "user",
-                    "content": USER_MESSAGE.format(word),
+                    "content": USER_MESSAGE.format(WORD_COUNT, word),
                 },
             ],
         )
         try:
             words = json.loads(response.choices[0].message.content)["words"]
-            if len(words) >= 4:
-                return words[:4]
+            if len(words) >= WORD_COUNT:
+                return words[:WORD_COUNT]
         except Exception as e:
             print(e)
             continue
@@ -53,10 +55,10 @@ def generate_all(client: OpenAI, raw_words: pd.DataFrame) -> pd.DataFrame:
                 {
                     "text": row["text"],
                     "complexity": row["complexity"],
-                    "taboo_word1": taboo_words[0],
-                    "taboo_word2": taboo_words[1],
-                    "taboo_word3": taboo_words[2],
-                    "taboo_word4": taboo_words[3],
+                    **{
+                        f"taboo_word_{j}": taboo_word
+                        for j, taboo_word in enumerate(taboo_words)
+                    },
                 }
             ),
         )
@@ -65,8 +67,6 @@ def generate_all(client: OpenAI, raw_words: pd.DataFrame) -> pd.DataFrame:
 
 def main() -> int:
     raw_words = pd.read_csv("words.csv")
-    raw_words = raw_words.sample(frac=1).reset_index(drop=True)
-    raw_words = raw_words.head(100)
 
     load_dotenv()
     client = OpenAI()
